@@ -64,11 +64,11 @@ export default function Home() {
         <div className="flex space-x-2">
           <Input
             type="text"
-            placeholder="Introduce una palabra en español"
+            placeholder="Introduce una palabra"
             value={spanishWord}
             onChange={handleInputChange}
             onKeyDown={handleInputKeyPress}
-            className="flex-1 text-2xl"
+            className="flex-1 text-2xl text-gray-600"
             ref={inputRef}
           />
           <Button onClick={handleDefineWord} disabled={isLoading || !spanishWord}>

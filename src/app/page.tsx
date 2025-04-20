@@ -1,6 +1,7 @@
 'use client';
 
 import React, {useState, useEffect, useRef} from 'react';
+import { RawResponseDialog } from '@/components/ui/raw-response-dialog';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
@@ -13,6 +14,8 @@ export default function Home() {
   const [definition, setDefinition] = useState<string | null>(null);
   const [exampleSentences, setExampleSentences] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [rawResponse, setRawResponse] = useState<string | null>(null);
+  const [correctedWord, setCorrectedWord] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -26,13 +29,14 @@ export default function Home() {
     try {
       const definitionResult = await generateDefinition({spanishWord});
       setDefinition(definitionResult.definition);
-
-      const exampleSentencesResult = await generateExampleSentences({spanishWord});
-      setExampleSentences(exampleSentencesResult.exampleSentences);
+      setExampleSentences(definitionResult.examples);
+      setRawResponse(definitionResult.rawResponse || 'No raw response available');
+      setCorrectedWord(definitionResult.correctedWord || spanishWord);
     } catch (error) {
       console.error('Error fetching data:', error);
       setDefinition('No se pudo cargar la definición.');
       setExampleSentences(['No se pudieron cargar las oraciones de ejemplo.']);
+      setCorrectedWord(spanishWord);
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +78,19 @@ export default function Home() {
               'Definir'
             )}
           </Button>
+        </div>
+
+        <div className="mb-4 text-center bg-teal-50 p-4 rounded-lg border border-teal-200">
+          {definition || exampleSentences ? (
+            <>
+              <p className="text-4xl font-bold text-teal-800">{correctedWord}</p>
+              {correctedWord && correctedWord !== spanishWord && (
+                <p className="text-sm text-teal-600 mt-2">¿Querías decir?</p>
+              )}
+            </>
+          ) : (
+            <p className="text-lg text-teal-600">Definiciones sencillas de palabras</p>
+          )}
         </div>
 
         {definition && (

@@ -3,36 +3,47 @@
  */
 export interface Definition {
   /**
-   * The word that is being defined.
+   * The original word that was queried.
    */
-  word: string;
+  originalWord: string;
+  /**
+   * The corrected word if needed, or the original word if no correction was necessary.
+   */
+  correctedWord: string;
   /**
    * The definition of the word.
    */
   definition: string;
+  /**
+   * Example sentences using the word.
+   */
+  examples: string[];
 }
 
 import {generateDefinition} from '@/ai/flows/generate-definition';
 
 /**
- * Asynchronously retrieves the definition of a given word. It first attempts to scrape SpanishDict,
- * and if that fails, it uses a Genkit flow to generate a definition.
+ * Asynchronously retrieves the definition, correction, and examples for a given word using AI.
  *
  * @param word The word to define.
- * @returns A promise that resolves to a Definition object containing the word and its definition.
+ * @returns A promise that resolves to a Definition object containing the word details.
  */
 export async function getDefinition(word: string): Promise<Definition> {
   try {
     const aiDefinitionResult = await generateDefinition({spanishWord: word});
     return {
-      word: word,
+      originalWord: word,
+      correctedWord: aiDefinitionResult.correctedWord,
       definition: aiDefinitionResult.definition,
+      examples: aiDefinitionResult.examples,
     };
   } catch (aiError) {
     console.error('Error generating definition with AI:', aiError);
     return {
-      word: word,
-      definition: 'Failed to load definition from both sources.',
+      originalWord: word,
+      correctedWord: word,
+      definition: 'Failed to generate definition.',
+      examples: [],
     };
   }
 }

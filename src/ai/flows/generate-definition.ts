@@ -16,14 +16,20 @@ const GenerateDefinitionInputSchema = z.object({
 export type GenerateDefinitionInput = z.infer<typeof GenerateDefinitionInputSchema>;
 
 const GenerateDefinitionOutputSchema = z.object({
+  correctedWord: z.string().describe('The corrected Spanish word if needed, or the original word if no correction was necessary.'),
   definition: z.string().describe('A definition of the Spanish word.'),
+  examples: z.array(z.string()).describe('Example sentences using the word.')
 });
 export type GenerateDefinitionOutput = z.infer<typeof GenerateDefinitionOutputSchema>;
 
 export async function generateDefinition(
-  input: GenerateDefinitionInput
-): Promise<GenerateDefinitionOutput> {
-  return generateDefinitionFlow(input);
+   input: GenerateDefinitionInput
+): Promise<GenerateDefinitionOutput & { rawResponse?: string }> {
+  const result = await generateDefinitionFlow(input);
+  return {
+    ...result,
+    rawResponse: result.rawResponse
+  };
 }
 
 const prompt = ai.definePrompt({
@@ -34,16 +40,19 @@ const prompt = ai.definePrompt({
     }),
   },
   output: {
-    schema: z.object({
-      definition: z.string().describe('A definition of the Spanish word.'),
-    }),
+    schema: GenerateDefinitionOutputSchema,
   },
-  prompt: `You are a Spanish language expert. Provide a concise definition for the word: {{{spanishWord}}}.`,
+  prompt: `You are a Spanish language expert. For the given word {{{spanishWord}}}, please:
+1. First correct the word if needed (if it's already correct, return it as is)
+2. Provide a short, clear definition
+3. Generate 2-3 example sentences using the word
+
+Respond in JSON format with correctedWord, definition, and examples fields.`,
 });
 
 const generateDefinitionFlow = ai.defineFlow<
   typeof GenerateDefinitionInputSchema,
-  typeof GenerateDefinitionOutputSchema
+  typeof GenerateDefinitionOutputSchema & { rawResponse?: string }
 >(
   {
     name: 'generateDefinitionFlow',
@@ -51,7 +60,10 @@ const generateDefinitionFlow = ai.defineFlow<
     outputSchema: GenerateDefinitionOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const response = await prompt(input);
+    return {
+      ...response.output!,
+      rawResponse: JSON.stringify(response, null, 2)
+    };
   }
 );

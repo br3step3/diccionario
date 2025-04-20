@@ -321,10 +321,16 @@ const GenerateDefinitionInputSchema = __TURBOPACK__imported__module__$5b$project
     spanishWord: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().describe('The Spanish word to generate a definition for.')
 });
 const GenerateDefinitionOutputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-    definition: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().describe('A definition of the Spanish word.')
+    correctedWord: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().describe('The corrected Spanish word if needed, or the original word if no correction was necessary.'),
+    definition: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().describe('A definition of the Spanish word.'),
+    examples: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].array(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string()).describe('Example sentences using the word.')
 });
 async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateDefinition(input) {
-    return generateDefinitionFlow(input);
+    const result = await generateDefinitionFlow(input);
+    return {
+        ...result,
+        rawResponse: result.rawResponse
+    };
 }
 const prompt = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$ai$2f$ai$2d$instance$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["ai"].definePrompt({
     name: 'generateDefinitionPrompt',
@@ -334,19 +340,25 @@ const prompt = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$ai$2f$ai$2
         })
     },
     output: {
-        schema: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-            definition: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$genkit$2f$lib$2f$common$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().describe('A definition of the Spanish word.')
-        })
+        schema: GenerateDefinitionOutputSchema
     },
-    prompt: `You are a Spanish language expert. Provide a concise definition for the word: {{{spanishWord}}}.`
+    prompt: `You are a Spanish language expert. For the given word {{{spanishWord}}}, please:
+1. First correct the word if needed (if it's already correct, return it as is)
+2. Provide a short, clear definition
+3. Generate 2-3 example sentences using the word
+
+Respond in JSON format with correctedWord, definition, and examples fields.`
 });
 const generateDefinitionFlow = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$ai$2f$ai$2d$instance$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["ai"].defineFlow({
     name: 'generateDefinitionFlow',
     inputSchema: GenerateDefinitionInputSchema,
     outputSchema: GenerateDefinitionOutputSchema
 }, async (input)=>{
-    const { output } = await prompt(input);
-    return output;
+    const response = await prompt(input);
+    return {
+        ...response.output,
+        rawResponse: JSON.stringify(response, null, 2)
+    };
 });
 ;
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["ensureServerEntryExports"])([
